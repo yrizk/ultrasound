@@ -31,7 +31,7 @@ class Triangle {
             "uniform mat4 uMVPMatrix;" +
             "attribute vec4 vPosition;" +
             "void main() {" +
-            "  gl_Position = vPosition;" +
+            "  gl_Position = uMVPMatrix * vPosition;" +
             "}"
 
     private val fragmentShaderCode =
@@ -100,8 +100,8 @@ class Triangle {
     }
 
     fun draw(mvpMatrix: FloatArray) {
-
-
+        
+        GLES20.glUseProgram(program)
 
         positionHandle = GLES20.glGetAttribLocation(program , "vPosition").also {
             // enable a handle to the triangle vertices
