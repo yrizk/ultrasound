@@ -35,10 +35,13 @@ public  class UltrasoundRenderer implements GLSurfaceView.Renderer {
 
     private int uColorLocation;
     private int aPositionLocation;
+    private int mvpMatrixHandle;
 
     private FloatBuffer vertexData;
 
     private float[] projectionMatrix = new float[16];
+    private float[] viewMatrix = new float[16];
+    private float[] mvpMatrix = new float[16];
 
     private Context context;
     float[] malletData = new float[] {
@@ -96,8 +99,8 @@ public  class UltrasoundRenderer implements GLSurfaceView.Renderer {
     }
 
     public void onDrawFrame(GL10 unused) {
-        // Clear the rendering surface.
-        glClear(GL_COLOR_BUFFER_BIT);
+      // Clear the rendering surface.
+      glClear(GL_COLOR_BUFFER_BIT);
 
       // Set the camera position (View matrix)
       Matrix.setLookAtM(viewMatrix, 0, 0, 0, -3, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
@@ -105,18 +108,24 @@ public  class UltrasoundRenderer implements GLSurfaceView.Renderer {
       // Calculate the projection and view transformation
       Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, viewMatrix, 0);
 
-        // Draw the first mallet blue.
-        for (int i = 0; i < malletData.length / 2 /* the stride */; i++) {
-          if (i % 2 == 0) {
-            glUniform4f(uColorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
-            glDrawArrays(GL_POINTS, i, 1);
-          }
-          else {
-            // Draw the second mallet red.
-            glUniform4f(uColorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-            glDrawArrays(GL_POINTS, i, 1);
-          }
+      // get handle to shape's transformation matrix
+      mvpMatrixHandle = GLES20.glGetUniformLocation(program, "uMVPMatrix");
+
+      // Pass the projection and view transformation to the shader
+      GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, mvpMatrix, 0);
+
+      // Draw the first mallet blue.
+      for (int i = 0; i < malletData.length / 2 /* the stride */; i++) {
+        if (i % 2 == 0) {
+          glUniform4f(uColorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
+          glDrawArrays(GL_POINTS, i, 1);
         }
+        else {
+          // Draw the second mallet red.
+          glUniform4f(uColorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
+          glDrawArrays(GL_POINTS, i, 1);
+        }
+      }
     }
 
     public void onSurfaceChanged(GL10 unused, int width, int height) {
