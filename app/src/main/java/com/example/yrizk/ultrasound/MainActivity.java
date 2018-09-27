@@ -1,14 +1,68 @@
 package com.example.yrizk.ultrasound;
 
-import android.support.v7.app.AppCompatActivity;
+import android.content.Intent;
+import android.database.Cursor;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.provider.MediaStore.Images.Media;
+import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
 
 public class MainActivity extends AppCompatActivity {
+
+    private static int RESULT_LOAD_IMAGE = 1;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        UltrasoundSurfaceView mainView = new UltrasoundSurfaceView(this);
-        setContentView(mainView);
+        setContentView(R.layout.main);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Button buttonLoadImage = (Button) findViewById(R.id.picture_picker);
+        if (buttonLoadImage != null) {
+            buttonLoadImage.setOnClickListener(new OnClickListener() {
+
+                @Override
+                public void onClick(View arg0) {
+
+                    Intent i = new Intent(
+                        Intent.ACTION_PICK,
+                        Media.EXTERNAL_CONTENT_URI);
+
+                    startActivityForResult(i, RESULT_LOAD_IMAGE);
+                }
+            });
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == RESULT_LOAD_IMAGE && resultCode == RESULT_OK && null != data) {
+            Uri selectedImage = data.getData();
+            String[] filePathColumn = { MediaStore.Images.Media.DATA };
+
+            Cursor cursor = getContentResolver().query(selectedImage,
+                filePathColumn, null, null, null);
+            cursor.moveToFirst();
+
+            int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+            String picturePath = cursor.getString(columnIndex);
+            cursor.close();
+            BitmapFactory.decodeFile(picturePath);
+            UltrasoundSurfaceView mainView = new UltrasoundSurfaceView(this, BitmapFactory.decodeFile(picturePath));
+            setContentView(mainView);
+        }
+
+
     }
 }

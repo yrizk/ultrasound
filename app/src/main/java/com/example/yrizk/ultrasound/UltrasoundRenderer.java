@@ -11,9 +11,10 @@ import static android.opengl.GLES20.glGetAttribLocation;
 import static android.opengl.GLES20.glGetUniformLocation;
 import static android.opengl.GLES20.glUniform4f;
 import static android.opengl.GLES20.glUseProgram;
-import static android.opengl.GLES20.*;
+import static android.opengl.GLES20.glVertexAttribPointer;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
@@ -44,6 +45,8 @@ public  class UltrasoundRenderer implements GLSurfaceView.Renderer {
     private float[] mvpMatrix = new float[16];
 
     private Context context;
+    private Bitmap source;
+
     float[] malletData = new float[] {
         // Mallets
         0.0f, 0.0f,
@@ -55,8 +58,9 @@ public  class UltrasoundRenderer implements GLSurfaceView.Renderer {
         -1f, -1f
     };
 
-    public UltrasoundRenderer(Context context) {
+    public UltrasoundRenderer(Context context, Bitmap source) {
       this.context = context;
+      this.source = source;
 
 
       vertexData = ByteBuffer

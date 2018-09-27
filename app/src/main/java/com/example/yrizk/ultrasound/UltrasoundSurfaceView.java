@@ -1,6 +1,7 @@
 package com.example.yrizk.ultrasound;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.opengl.GLSurfaceView;
 
 public class UltrasoundSurfaceView extends GLSurfaceView {
@@ -11,11 +12,11 @@ public class UltrasoundSurfaceView extends GLSurfaceView {
     private float previousX = 0;
     private float previousY = 0;
 
-    public UltrasoundSurfaceView(Context context) {
+    public UltrasoundSurfaceView(Context context, Bitmap source) {
         super(context);
         // we're using opengles v2.0 context
         setEGLContextClientVersion(2);
-        renderer = new UltrasoundRenderer(context);
+        renderer = new UltrasoundRenderer(context, source);
         setRenderer(renderer);
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     }
