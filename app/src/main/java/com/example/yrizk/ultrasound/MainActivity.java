@@ -21,18 +21,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
         Button buttonLoadImage = (Button) findViewById(R.id.picture_picker);
         if (buttonLoadImage != null) {
             buttonLoadImage.setOnClickListener(new OnClickListener() {
 
                 @Override
                 public void onClick(View arg0) {
-
                     Intent i = new Intent(
                         Intent.ACTION_PICK,
                         Media.EXTERNAL_CONTENT_URI);
@@ -41,6 +35,12 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
     }
 
     @Override
@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
             int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
             String picturePath = cursor.getString(columnIndex);
             cursor.close();
-            BitmapFactory.decodeFile(picturePath);
+
             UltrasoundSurfaceView mainView = new UltrasoundSurfaceView(this, BitmapFactory.decodeFile(picturePath));
             setContentView(mainView);
         }

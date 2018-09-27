@@ -15,6 +15,11 @@ import static android.opengl.GLES20.glVertexAttribPointer;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
+import android.graphics.Paint;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
@@ -45,32 +50,87 @@ public  class UltrasoundRenderer implements GLSurfaceView.Renderer {
     private float[] mvpMatrix = new float[16];
 
     private Context context;
-    private Bitmap source;
 
-    float[] malletData = new float[] {
-        // Mallets
-        0.0f, 0.0f,
-        0f, -0.25f,
-        0f,  0.25f,
-        0.25f, 0f,
-        -0.25f, 0f,
-        1f, 1f,
-        -1f, -1f
-    };
+    // float[] vertexArray = new float[] {
+    //     // Mallets
+    //     0.0f, 0.0f,
+    //     0f, -0.25f,
+    //     0f,  0.25f,
+    //     0.25f, 0f,
+    //     -0.25f, 0f,
+    //     1f, 1f,
+    //     -1f, -1f
+    // };
+  float[] vertexArray;
+  boolean[] colorData;
 
-    public UltrasoundRenderer(Context context, Bitmap source) {
+
+  public UltrasoundRenderer(Context context, Bitmap source) {
       this.context = context;
-      this.source = source;
-
-
+      buildVertexArray(source);
       vertexData = ByteBuffer
-          .allocateDirect(malletData.length * BYTES_PER_FLOAT)
+          .allocateDirect(vertexArray.length * BYTES_PER_FLOAT)
           .order(ByteOrder.nativeOrder())
           .asFloatBuffer();
 
-      vertexData.put(malletData);
-
+      vertexData.put(vertexArray);
     }
+
+    private void buildVertexArray(Bitmap b) {
+      Bitmap greyscale = toGrayscale(b);
+      int width = greyscale.getWidth();
+      int height = greyscale.getHeight();
+      vertexArray = new float[width * height * 2];
+      colorData = new boolean[width * height * 2];
+      int glDataCounter = 0;
+      for (int i = 0; i < width; i++) {
+        for (int j = 0; j < height; j++) {
+          int pixel = greyscale.getPixel(i, j);
+          int red = Color.red(pixel);
+          int green = Color.green(pixel);
+          int blue = Color.blue(pixel);
+          int gray = (int)(red * 0.3 + green * 0.59 + blue * 0.11);
+          int ti = i;
+          int tj = j;
+          if (i < width / 2) {
+             ti *= -1;
+          }
+          if (j > height / 2) {
+            tj *= -1;
+          }
+          float glX =  (float) ti / width / 2;
+          float glY = (float) tj / height / 2;
+
+          boolean black = gray < 127;
+
+          vertexArray[glDataCounter] = glX;
+          colorData[glDataCounter] = black;
+
+          vertexArray[++glDataCounter] = glY;
+          colorData[glDataCounter] = black;
+
+          glDataCounter++;
+        }
+      }
+    }
+
+
+  private Bitmap toGrayscale(Bitmap bmpOriginal) {
+    int width, height;
+    height = bmpOriginal.getHeight();
+    width = bmpOriginal.getWidth();
+
+    Bitmap bmpGrayscale = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+    Canvas c = new Canvas(bmpGrayscale);
+    Paint paint = new Paint();
+    ColorMatrix cm = new ColorMatrix();
+    cm.setSaturation(0);
+    ColorMatrixColorFilter f = new ColorMatrixColorFilter(cm);
+    paint.setColorFilter(f);
+    c.drawBitmap(bmpOriginal, 0, 0, paint);
+    bmpOriginal.recycle();
+    return bmpGrayscale;
+  }
 
     public void onSurfaceCreated(GL10 unused, EGLConfig config) {
         // Set the background frame color
@@ -118,17 +178,16 @@ public  class UltrasoundRenderer implements GLSurfaceView.Renderer {
       // Pass the projection and view transformation to the shader
       GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, mvpMatrix, 0);
 
-      // Draw the first mallet blue.
-      for (int i = 0; i < malletData.length / 2 /* the stride */; i++) {
-        if (i % 2 == 0) {
-          glUniform4f(uColorLocation, 0.0f, 0.0f, 1.0f, 1.0f);
-          glDrawArrays(GL_POINTS, i, 1);
+      int i = 0;
+      while (i < vertexArray.length) {
+        if (colorData[i]) {
+          glUniform4f(uColorLocation, 0.0f, 0.0f, 0.0f, 1.0f);
+        } else {
+          glUniform4f(uColorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
         }
-        else {
-          // Draw the second mallet red.
-          glUniform4f(uColorLocation, 1.0f, 0.0f, 0.0f, 1.0f);
-          glDrawArrays(GL_POINTS, i, 1);
-        }
+        glDrawArrays(GL_POINTS, i, 1);
+        // update correctly
+        i++;
       }
     }
 
